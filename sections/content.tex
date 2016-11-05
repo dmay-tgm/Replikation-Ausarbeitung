@@ -1,20 +1,31 @@
 %!TEX root=../document.tex
 
-\section{Definition}
+\section{Einleitung}
+\subsection{Definition}
+Replikation (lateinisch \textit{replicatio} \cite{duden} ``Wiederholung``, ``kreisförmige Bewegung``) \cite{dict} ist ``ein Verfahren der Datensicherung bei dem dieselben Daten von einem primären Speichermedium auf ein oder mehrere sekundäre Speichermedien kopiert werden.`` \cite{itw}
 
-\section{Caching vs. Replikation}
+Demnach wäre Replikation also nichts anderes als ein simples Backup. Replikation wird jedoch besser definiert als mehrfache Speicherung \textbf{identer} Daten (an unterschiedlichen Orten) inklusive der Synchronisation selbiger. \cite{wiki}
 
-\section{Gründe für Replikation}
+Zwar gibt es inkrementelle Backups, die ebenfalls eine gewisse Synchronisierung der Daten beinhalten, jedoch erfolgt diese bei Backups stets einseitig. Bei der Replikation kann sie auch bidirektional implementiert werden. Ebenfalls wird bei einem Backup nie direkt mit den Sekundärdaten, also dem eigentlich Backup, gearbeitet, diese dienen lediglich als Absicherung im Verlustfall.
 
-\section{Nachteile}
+\subsection{Caching vs. Replikation}
+
+Caching (Cache = Versteck, geheimes Lager) wird, im Unterschied zur Replikation, definiert als \textbf{temporäres} Speichern von redundanten Daten. Zusätzlich sollte der Cache für die Administration möglichst unsichtbar sein, wovon bei der Replikation nicht die Rede sein kann. \cite{kaiserslautern}
+
+\section{Pro \& Kontra}
+\subsection{Gründe für Replikation}
+
+Die Replikation ist also die bewusste Erzeugung redundanter Daten, obwohl dies eigentlich den Normalformen, die beim Planen einer Datenbank beachtet werden sollten, widerspricht. \cite{kaiserslautern}
+
+\subsection{Nachteile}
 
 \section{Anwendungsszenarien}
 
-\section{asynchron vs. synchron}
+\section{Asynchrone \& synchrone Replikation}
 
 \subsection{Konvergenz}
 
-\section{unidirektional vs. bidirektional}
+\section{Unidirektionale \& bidirektionale Replikation}
 
 \section{Klassifikation}
 
