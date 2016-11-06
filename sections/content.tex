@@ -73,7 +73,7 @@ Mit der Anzahl der Knoten wächst auch die Komplexität des Gesamtsystems. Dadur
 
 Bei der Implementierung von Replikation gibt es im Prinzip drei Ziele, die miteinander im Konflikt stehen.
 
-Das erste Ziel ist die Erhaltung der Datenkonsistenz. Dies kann entweder über eine \textbf{1-Kopien-Äquivalenz} oder eine kleine Kopienanzahl erreicht werden. Die 1-Kopien-Äquivalenz besagt, dass jeder Zugriff auf eine beliebige Instanz des Replikationsverbundes den neuesten konsistenten Zustand liefert. \cite{leipzig2} Das bedeutet, dass es möglichst zu jeder Zeit nur völlig idente Replikate gibt.
+Das erste Ziel ist die Erhaltung der Datenkonsistenz. Dies kann entweder über eine \textbf{1-Kopien-Äquivalenz} \label{aequivalenz} oder eine kleine Kopienanzahl erreicht werden. Die 1-Kopien-Äquivalenz besagt, dass jeder Zugriff auf eine beliebige Instanz des Replikationsverbundes den neuesten konsistenten Zustand liefert. \cite{leipzig2} Das bedeutet, dass es möglichst zu jeder Zeit nur völlig idente Replikate gibt.
 
 Das nächste Ziel, die Minimierung des Änderungsaufwands, wird ebenfalls durch eine kleine Anzahl von Kopien erreicht. Damit der Änderungsaufwand aber so gering wie möglich bleibt, sollen Replikate eher selten synchronisiert werden. \cite{leipzig2}
 
@@ -137,15 +137,71 @@ Eine gewisse Ausfallsicherheit kann durch ein fehlertolerantes Design des System
 
 \section{Asynchrone \& synchrone Replikation}
 
-vor- u nachteile, probleme
+Abhängig von den oben genannten Zielen und Einsatzmöglichkeiten, kann die Replikation unterschiedlich implementiert werden. Der erste Unterschied zwischen einzelnen Implementierungen ist der Zeitpunkt der Synchronisation der Replikate.
 
-\subsection{Konvergenz}
+\subsection{Synchrone Replikation}
 
-nach schreibzugriffspause letztendlich konsistent
+Zugriffe auf Replikate sollten sich nicht von Zugriffen auf die Ursprungsdaten unterscheiden. Dies wäre der Fall, wenn eine \textbf{1-Kopien-Äquivalenz} (siehe Seite \pageref{aequivalenz}) gegeben wäre. Ein Weg zu diesem Ziel wäre die synchrone Replikation. \cite{darmstadt}
+
+Hierbei werden alle Änderungen, die an einem Knoten vorgenommen werden, verzögerungsfrei auch an den anderen Knoten abgearbeitet. Somit gibt es jederzeit nur identische Kopien. Bevor also ein Schreibvorgang erfolgreich abgeschlossen ist, müssen alle Knoten des Systems den Vorgang bestätigen. Schlägt die Operation auf einem Knoten fehl, wird die Änderung auf allen Knoten rückgängig gemacht und die gesamte Transaktion ist fehlgeschlagen. \cite{leipzig}
+
+\subsubsection{Vorteile}
+
+Das ACID (Atomicity Consistency Isolation Durability) Prinzip wird mit synchroner Replikation weiterhin unterstützt. Jede Transaktion wird, für das Gesamtsystem gesehen, als atomare Einheit betrachtet. Man spricht auch von transaktionaler Konsistenz. \cite{kaiserslautern} Während der Änderung auf einem anderen Knoten werden Sperren auf den anderen eingesetzt, um ein eventuell gleichzeitiges Bearbeiten zu verhindern. Synchronisierungskonflikte können somit gar nicht erst entstehen. \cite{ralfb}
+
+\subsubsection{Nachteile}
+
+Sind alle Instanzen des Systems untereinander erreichbar, dann erhält man stets die neuesten Daten. Ist ein Teil des Verbunds aber nicht erreichbar, dann können veraltete Kopien entstehen. Meistens wird dies aber verhindert, indem Änderungen bei einem Teilausfall nicht möglich sind. \cite{kaiserslautern}
+
+Somit wird auch die Verfügbarkeit des Systems beeinträchtigt. In einer solchen Konfiguration ist das Gesamtsystem nur erreichbar, wenn alle Teilsysteme erreichbar sind. Dies verschlechtert sogar die Verfügbarkeit des Gesamtsystems. Die Daten des Systems sind nur bearbeitbar, wenn in dem Moment keine Änderung stattfindet. Somit bringen mehrere Server keinen Benefit puncto Skalierbarkeit mehr.
+\clearpage
+Da auf die Rückmeldung aller Knoten gewartet werden muss, wird die Performance von Schreibzugriffen drastisch beeinflusst. \cite{kaiserslautern} Das Resultat dieser Einschränkung ist, dass synchrone Replikation nur über geringe Distanzen oder Hochleistungsnetzwerke verwendet werden kann. \cite{itw} Somit ist eine weltweite Verteilung auch nicht realisierbar.
+
+\subsubsection{Einsatz}
+
+Für mobile Computing ist synchrone Replikation also ungeeignet, da es hier um die Verfügbarkeit geht, die mit synchroner Replikation eher eingeschränkt wird. Die Hochverfügbarkeit wäre damit nicht möglich, da zu lange Wartezeiten entstehen und das Service damit wieder nicht verfügbar ist.
+
+Bei eher statischen Daten kann die Leselast gut mit synchroner Replikation skaliert werden.
+
+\subsection{Asynchrone Replikation}
+
+Da die synchrone Replikation oft nicht möglich ist bzw. teilweise mehr Nachteile als Vorteile bringt, gibt es auch die asynchrone Replikation.
+
+Hierbei werden Änderungen vorerst nur lokal vorgenommen. Damit das Datenbanksystem trotzdem noch die Forderung der Datenkonsistenz erfüllt, wird der Begriff Konsistenz durch \textbf{Konvergenz} ersetzt. Die Konvergenz stellt nur sicher, dass die Replikate nach einer gewissen änderungsfreien Zeit ident sind. \cite{kaiserslautern}
+
+\subsubsection{Vorteile}
+
+Da nicht auf das OK der anderen Knoten gewartet werden muss, reduziert die asynchrone Replikation die Antwortzeit bei Schreiboperationen drastisch gegenüber der synchronen Replikation. \cite{kaiserslautern}
+
+Die Verfügbarkeit wird ebenfalls verbessert, da die Knoten auch bei Teilausfällen verfügbar sind.
+
+\subsubsection{Nachteile}
+
+Bei verspäteter Synchronisierung der Datensätze kann es zu Konflikten kommen. Hierbei können Aktualisierungs-, Eindeutigkeits- und Löschkonflikte auftreten.
+
+Bei Aktualisierungskonflikten wurde das gleiche Datenobjekt von unterschiedlichen Replikaten aus verändert. Nun muss entschieden werden, welche Version gültig ist. \cite{darmstadt}
+
+Eindeutigkeitskonflikte betreffen das Einfügen von Datensätzen. Versuchen zwei Replikate ein Datenobjekt, mit dem gleichen Primärschlüssel oder anderen Daten die eindeutig sein müssen, hinzuzufügen, ergibt sich ebenfalls ein Konflikt. \cite{darmstadt}
+
+Löschkonflikte entstehen, wenn der Datensatz auf einem Replikat gelöscht wird und auf einem anderen später noch bearbeitet wird. \cite{darmstadt}
+
+Mit diesen Konflikten steigt der Updateaufwand erheblich an, es sei denn, die Konsistenz bzw. Konvergenz des Systems ist nicht von höchster Bedeutung.
+
+\subsubsection{Einsatz}
+
+Für dynamische Datensätze wird ausschließlich asynchrone Replikation eingesetzt.
+
+Für mobile Computing eignet sich asynchrone Replikation perfekt, da die Außendienstmitarbeiter somit auch offline arbeiten können. Hochverfügbarkeit kann ebenfalls mit asynchroner Replikation gelöst werden, jedoch muss hier beachtet werden, dass Informationen verloren gehen, da die neuesten Änderungen im Fehlerfall noch nicht übertragen wurden.
+
+Für die Skalierung reiner Leselast ist diese Art der Replikation ungeeignet, da die Replikate nicht konsistent sind und kein Performanceunterschied zur synchronen Replikation besteht.
 
 \section{Unidirektionale \& bidirektionale Replikation}
 
 vor- u nachteile, probleme
+
+\subsection{Unidirektionale Replikation}
+
+\subsection{Bidirektionale Replikation}
 
 \section{Klassifikation}
 
