@@ -31,9 +31,9 @@ Mithilfe von Replikation wird ebenfalls die Verfügbarkeit des Gesamtsystems erh
 
 Replikation verbessert die Antwortzeiten auf zwei Arten:
 
-Zuerst werden die Antwortzeiten des System verkürzt, da die Last auf mehrere Server verteilt wird. Somit haben einzelne Knoten mehr Ressourcen zur Verfügung um einem Client schneller zu antworten. Das ist der angenehme Nebeneffekt der Skalierbarkeit (Unterpunkt \ref{sec:scale} auf Seite \pageref{sec:scale}). \cite{leipzig}
+Erstens werden die Antwortzeiten des Systems verkürzt, da die Last auf mehrere Server verteilt wird. Somit haben einzelne Knoten mehr Ressourcen zur Verfügung um einem Client schneller zu antworten. Das ist der angenehme Nebeneffekt der Skalierbarkeit (Unterpunkt \ref{sec:scale} auf Seite \pageref{sec:scale}). \cite{leipzig}
 
-Zusätzlich werden die lokalen Antwortzeiten des System verkürzt, da stets auf eine ortsnahe oder netztopologisch günstige Instanz der Datenbank zugegriffen wird. \cite{leipzig}
+Zusätzlich werden die lokalen Antwortzeiten des Systems verkürzt, da stets auf eine ortsnahe oder netztopologisch günstige Instanz der Datenbank zugegriffen wird. \cite{leipzig}
 
 \begin{figure}[!h]
 	\begin{center}
@@ -68,15 +68,92 @@ Beispielsweise werden in der Zentrale in Frankfurt alle Datensätze benötigt. I
 \subsubsection{Komplexität}
 
 Mit der Anzahl der Knoten wächst auch die Komplexität des Gesamtsystems. Dadurch wird die Installation, Konfiguration und Wartung des Systems aufwendiger, was wiederum zu erhöhten Kosten führt.
+\clearpage
+\section{Anwendung}
 
-\section{Anwendungsszenarien}
+Bei der Implementierung von Replikation gibt es im Prinzip drei Ziele, die miteinander im Konflikt stehen.
+
+Das erste Ziel ist die Erhaltung der Datenkonsistenz. Dies kann entweder über eine \textbf{1-Kopien-Äquivalenz} oder eine kleine Kopienanzahl erreicht werden. Die 1-Kopien-Äquivalenz besagt, dass jeder Zugriff auf eine beliebige Instanz des Replikationsverbundes den neuesten konsistenten Zustand liefert. \cite{leipzig2} Das bedeutet, dass es möglichst zu jeder Zeit nur völlig idente Replikate gibt.
+
+Das nächste Ziel, die Minimierung des Änderungsaufwands, wird ebenfalls durch eine kleine Anzahl von Kopien erreicht. Damit der Änderungsaufwand aber so gering wie möglich bleibt, sollen Replikate eher selten synchronisiert werden. \cite{leipzig2}
+
+Der eigentliche Benefit der Replikation ist die Erhöhung der Verfügbarkeit und die Performance-Steigerung (vor allem) bei Lesezugriffen. Im Gegensatz zu den beiden anderen Zielen, wird dieses entweder mithilfe einer großen Anzahl an Kopien oder mit dem Zugriff auf beliebige, möglichst wenige Kopien erreicht. \cite{leipzig2} Letzteres erhöht jedoch nicht die Verfügbarkeit und kann nur implementiert werden, falls mehrere ortsnahe Knoten zur Verfügung stehen.
+
+\begin{figure}[!h]
+	\begin{center}
+		\includegraphics[width=1\linewidth]{images/konflikte.jpg}
+		\caption{Zielkonflikte der Replikation \cite{leipzig2}}
+		\label{konflikte}
+	\end{center}
+\end{figure}
+
+\subsection{Mobile Computing}
+
+\subsubsection{Szenario}
+
+Für Außendienstmitarbeiter ist es wichtig, den Arbeitsort und die Arbeitszeit so flexibel wie möglich zu gestalten. Deshalb setzen Unternehmen zunehmend auf mobile Endgeräte. Aufgrund der Zeit- und Ortsflexibilität ist die Datenbank der Zentrale nicht ständig verfügbar. Damit die Endgeräte auch offline arbeiten können, müssen sie stets mit aktuellen, für den Mitarbeiter relevanten, Daten versorgt werden. Die benötigten Daten können je nach Termin variieren und werden daher täglich aktualisiert. In der Zentrale befindet sich die konsolidierte Datenbank aller Datensätze. \cite{kaiserslautern}
+
+\subsubsection{Strategie}
+
+Ausgewählte Datensätze der konsolidierten Datenbank werden also regelmäßig auf mobile Endgeräte repliziert. Finden auf den mobilen Endgeräten Änderungen statt, stellt sich die Frage, wie diese gespeichert werden. Nun gibt es zwei Arten dieses System zu implementieren. Entweder sind die replizierten Daten reine Lesekopien und Änderungen werden nur lokal gespeichert, d.h. es können keine Verkäufe oder ähnliche Schreibzugriffe getätigt werden. Ein andere Möglichkeit wäre es, das System bei erneuter Konnektivität zu synchronisieren. \cite{leipzig}
+
+Dabei ist das Hauptziel die Erhöhung der Verfügbarkeit, die über eine hohe Kopienanzahl erreicht wird. Die Erhaltung der Datenkonsistenz ist bei dieser Art von Daten (Kundenstammdaten) leicht einzuhalten, da sie recht statisch sind. Der Änderungsaufwand ist ebenfalls gering, falls nur Lesezugriffe stattfinden. Die Endgeräte werden einfach täglich aktualisiert und arbeiten den restlichen Tag mit dem gleichen Datensatz. Kompliziert wird es jedoch, wenn die Synchronisation beidseitig funktionieren soll. Mit den Schreibzugriffen wird es schwieriger die Daten konsistent zu halten, da bei \textit{n} Endgeräten am Ende des Tages \textit{n} verschiedene Replikate vorhanden sind. Werden diese am Ende des Tages synchronisiert kann dies einen erheblichen Änderungsaufwand verursachen.
+
+\subsubsection{Vorteile durch Replikation}
+
+Diese Szenario wäre ohne Replikation nur mit einer zentralen Datenbank bewältigbar. Dadurch fehlt aber die Möglichkeit offline zu arbeiten, was auch der größte Vorteil der Replikation in diesem Szenario ist. Zusätzlich ist die Antwortzeit bei einer zentralen Datenbank wesentlich höher. \cite{kaiserslautern}
+
+\subsection{Skalierbarkeit von Leselast}
+
+\subsubsection{Szenario}
+
+Webseiten verarbeiten täglich bis zu mehrere Millionen Anfragen. Bei diesen Anfragen handelt es sich bei ca. 97 - 99\% um Lesezugriffe. \cite{kaiserslautern} Einzelne Server sind logischerweise nicht in der Lage diese Vielzahl an Zugriffen zu verarbeiten. Deswegen setzt man einen Lastverteilungsverbund ein, in dem die Anfragen auf einzelne Knoten verteilt werden. Somit wird das Gesamtsystem auch für viele gleichzeitige Lesezugriffe einsetzbar.
+
+\subsubsection{Strategie}
+
+Es gibt also einen Serverbund aus möglichst identen Datenbanken, um die Vielzahl der Zugriffe aufzuteilen. Üblicherweise gibt es in diesen Konfigurationen einen Master-Server, auf dem auch Änderungen (Aktualisierungen der Informationen) durchgeführt werden können. Alle anderen Knoten sind Slave-Kopien, welche die Daten vom Master-Server erhalten. Auch hier werden Daten eingesetzt, die eher statisch sind.
+
+Das Hauptziel ist hier die Skalierbarkeit, also die Lastverteilung. Diese wird durch eine mittlere - hohe Anzahl an Kopien erreicht, auf die möglichst wahlfrei zugegriffen werden kann. Da die Daten recht statisch sind, ist es ein leichtes, diese konsistent zu halten. Der Änderungsaufwand bleibt dadurch ebenfalls gering. Würde es sich um stark dynamische Daten handeln, würde der Änderungsaufwand und die fehlende Konsistenz den eigentlichen Nutzen der Replikation übersteigen.
+
+\subsubsection{Vorteile durch Replikation}
+
+Dieses Szenario wäre anders nur bewältigbar, wenn jeder Server verschiedenste Aufgaben erledigt und das System somit die Last verteilt, ohne teilweise redundant zu sein. Das Problem dieser Implementierung ist, dass die Aufgaben nicht immer gerecht geteilt werden und die Nutzungshäufigkeit der einzelnen Aufgaben nicht vorhergesehen werden kann.
+
+\subsection{Hochverfügbarkeit}
+
+\subsubsection{Szenario}
+
+Viele Dienste müssen rund um die Uhr verfügbar sein und verwalten deshalb redundante Serverkopien. Fällt ein einzelner Knoten aus, so kann der nächste übernehmen.
+
+\subsubsection{Strategie}
+
+Dies könnte mit der vorhin beschriebenen Master/Slave Konfiguration mit vielen Slave Kopien gelöst werden. Wie bereits beschrieben, ist dieses Prinzip nur für statische Daten rentabel. Ändern sich die Daten sehr häufig, ist es sinnvoll die Anzahl der Slave Kopien zu reduzieren. Ansonsten ist der zu betreibende Änderungsaufwand zu hoch. Im Extremfall sollte mit einer einzelnen Slave Kopie gearbeitet werden, um den Synchronisierungsaufwand zu reduzieren. \cite{kaiserslautern} Damit die Performance des Systems nicht beeinträchtigt wird, werden die durchzuführenden Änderungsanweisungen an den Slave geschickt, der im Prinzip dieselben Aufgaben etwas zeitversetzt abarbeitet. Würden beide Server bei jeder Transaktion synchronisiert werden, würde die Bearbeitungszeit einer Anfrage wesentlich erhöht werden.
+
+Das Hauptziel ist also die erhöhte Verfügbarkeit, die bei statischen Daten über eine große Kopienanzahl realisiert werden kann. Sind die Daten dynamisch, wird die Anzahl der Kopien eingeschränkt. Die Daten sollten so konsistent wie möglich sein, da der Hauptserver jederzeit ausfallen kann. Der Änderungsaufwand wird gering gehalten, indem eine Master/Slave Konfiguration eingesetzt wird.
+
+\subsubsection{Vorteile durch Replikation}
+
+Eine gewisse Ausfallsicherheit kann durch ein fehlertolerantes Design des Systems (USV, Notstromaggregat, usw.) erreicht werden. Ist beispielsweise aber die Serverhardware an sich defekt, so kann nur Redundanz und die damit verbundene Synchronisation der Schlüssel zum Erfolg sein.
 
 \section{Asynchrone \& synchrone Replikation}
 
+vor- u nachteile, probleme
+
 \subsection{Konvergenz}
+
+nach schreibzugriffspause letztendlich konsistent
 
 \section{Unidirektionale \& bidirektionale Replikation}
 
+vor- u nachteile, probleme
+
 \section{Klassifikation}
 
+Tabellengrafik
+
+Baumgrafik
+
 \section{Resümee}
+Replikation ist also...
+Replikation ist gut wenn man folgendes beachtet...
+gibt folgende Varianten ...
