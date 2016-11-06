@@ -176,6 +176,7 @@ Da nicht auf das OK der anderen Knoten gewartet werden muss, reduziert die async
 Die Verfügbarkeit wird ebenfalls verbessert, da die Knoten auch bei Teilausfällen verfügbar sind.
 
 \subsubsection{Nachteile}
+\label{syncprob}
 
 Bei verspäteter Synchronisierung der Datensätze kann es zu Konflikten kommen. Hierbei können Aktualisierungs-, Eindeutigkeits- und Löschkonflikte auftreten.
 
@@ -197,11 +198,65 @@ Für die Skalierung reiner Leselast ist diese Art der Replikation ungeeignet, da
 
 \section{Unidirektionale \& bidirektionale Replikation}
 
-vor- u nachteile, probleme
+Ein weiterer Unterschied zwischen den Implementierungsvarianten ist die Richtung der Synchronisation. 
 
 \subsection{Unidirektionale Replikation}
 
+Zur Skalierung der Leselast implementiert man einen Hauptserver, auf dem Änderungen durchgeführt werden können, und mehrere Nebenserver, auf denen Daten lediglich gelesen werden können. Dieses Master/Slave oder Publish-Subscribe Modell ist der Grundgedanke der unidirektionalen bzw. asymmetrischen Replikation.
+
+\begin{figure}[!h]
+	\begin{center}
+		\includegraphics[width=1\linewidth]{images/unidirektional.jpg}
+		\caption{Asymmetrische Replikation \cite{leipzig}}
+		\label{unidirektional}
+	\end{center}
+\end{figure}
+
+Hierbei werden alle Änderungen nur auf einer Instanz durchgeführt. Diese propagiert die Updates weiter und kümmert sich darum, dass die Slave-Server die aktuellen Daten erhalten. Auf die Nebenserver kann also nur für Leseoperationen zugegriffen werden. \cite{leipzig}
+
+\subsubsection{Vorteile}
+
+Der größte aber auch einzige Vorteil ist, dass keine Konflikte entstehen können. \cite{leipzig}
+
+\subsubsection{Nachteile}
+
+Die Rechenlast, für das Management der Synchronisation, liegt einzig und allein beim Master-Server. Darunter leiden vor allem die Skalierbarkeit und Verfügbarkeit des Gesamtsystems, da ein einzelner Server für eine Vielzahl an Schreiboperationen nicht ausreicht. 
+
+\subsubsection{Einsatz}
+
+Für mobile Computing ist unidirektionale Replikation eher weniger geeignet, da Außendienstmitarbeiter ihre Änderungen (Verkäufe) nicht durchführen können. Die Offline-Daten können lediglich für Produktinformationen und ähnliches verwendet werden.
+
+Perfekt geeignet ist die asymmetrische Replikation für die Skalierung reiner Leselast.  Auch für Hochverfügbarkeit ist sie geeignet, da im Fehlerfall einfach ein Slave-Server die Rolle des Master-Servers übernehmen kann.
+
 \subsection{Bidirektionale Replikation}
+
+Da es auch Szenarien gibt, in denen der Schreibzugriff an mehreren Stellen sinnvoll ist, steht im Gegensatz zur asymmetrischen Replikation die bidirektionale.
+
+\begin{figure}[!h]
+	\begin{center}
+		\includegraphics[width=1\linewidth]{images/bidirektional.jpg}
+		\caption{Symmetrische Replikation \cite{leipzig}}
+		\label{bidirektional}
+	\end{center}
+\end{figure}
+
+Bei dieser Implementierungsvariante ist das Ändern von Datensätzen an jedem Knoten erlaubt. \cite{leipzig} Damit besitzt jedes Replikat die identen Schreib- und Leserechte.
+
+\subsubsection{Vorteile}
+
+Durch die mögliche Änderung an jeder Stelle können auch Schreibzugriffe skaliert werden. Dies geschieht durch eine Lastverteilung der Anfragen.
+
+Ein gleichzeitiger Nebeneffekt ist, dass die Antwortzeit sinkt, da stets eine ortsnahe Kopie gewählt wird. Dies gilt logischerweise nur in Kombination mit asynchroner Replikation, da es ansonsten ständig Sperren gäbe.
+
+\subsubsection{Nachteile}
+
+Der Nachteil ist, dass hier wieder Konflikte entstehen können. Zwar könnte bidirektionale Replikation auch synchron implementiert werden, jedoch ist dies in der Praxis nicht der Fall. Aufgrund der asynchronen Replikation ergeben sich wieder die Synchronisierungskonflikte (siehe Seite \pageref{syncprob}). Deshalb ist abzuwägen, ob die Lastverteilung im Verhältnis zum gestiegenen Kommunikationsaufwand für die Synchronisierung rentabel ist. \cite{leipzig}
+
+\subsubsection{Einsatz}
+
+Für mobile Computing eignet sich die bidirektionale Replikation sehr, da somit auch offline produktiv gearbeitet werden kann.
+
+In der Hochverfügbarkeit könnte man symmetrische Replikation entweder mit synchroner kombinieren und würde somit ein System erhalten, das für einzelne Anfragen lange Antwortzeiten hat und somit nicht mehr ständig verfügbar ist. Oder man kombiniert sie mit asynchroner Replikation, was im Fehlerfall einen erhöhten Informationsverlust zur Folge hätte, da die Änderungen noch nicht synchronisiert wurden. Für die Skalierung der Leselast eignet sich diese Strategie nicht, da sie keinen zusätzlichen Benefit dafür bringt.
 
 \section{Klassifikation}
 
