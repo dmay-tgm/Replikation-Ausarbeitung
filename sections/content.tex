@@ -305,6 +305,11 @@ Bei der asynchronen Replikation kann man nun noch entscheiden, ob ein Knoten fü
 Da bei der synchronen Replikation Sperren verhängt werden, bringt ein einzelner Master-Server keinen Konsistenzvorteil gegenüber einer Multi-Master Architektur. Dies ist der Grund, warum diese Variante in der Grafik gar nicht erst vorkommt.
 
 \section{Resümee}
-Replikation ist also...
-Replikation ist gut wenn man folgendes beachtet...
-gibt folgende Varianten ...
+
+Replikation ist also die absichtliche Erstellung redundanter Daten und die Synchronisierung selbiger.
+
+Die Gründe für den Einsatz der Replikation sind im Prinzip Performancesteigerungen, Verbesserungen der Verfügbarkeit und der Skalierbarkeit.
+
+Dafür muss ein erhöhter Verwaltungsaufwand in Kauf genommen werden. Das große Problem mit der Replikation ist aber, dass bei der Zusammenführung veränderter Daten Konflikte entstehen.
+
+Da je nach Anwendungsfall verschiedene Kriterien eine Rolle spielen, können Replikationsverfahren im Grunde durch zwei Parameter unterschieden werden. Erstens durch den Zeitpunkt der Synchronisierung und zweitens durch die Richtung der Synchronisierung.
