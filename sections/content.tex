@@ -278,9 +278,9 @@ Bei asynchroner Replikation spricht man von fauler (lazy, manchmal auch optimist
 	\center
 	\begin{tabular}{ | @{\hspace{3mm}} c @{\hspace{3mm}} | @{\hspace{3mm}} c @{\hspace{3mm}} | @{\hspace{3mm}} c @{\hspace{3mm}} |}	
 		\hline \veryspecialcell[c]{\textbf{Propagation}\\\textbf{vs.}\\\textbf{Ownership}} & \textbf{Lazy} & \textbf{Eager}\\ \hline \textbf{Group} & 
-		\specialcell[c]{N transactions\\N object owners} & \specialcell[c]{one transaction\\N object owners}\\ \hline 
+		\specialcell[c]{\textit{n} transactions\\\textit{n} object owners} & \specialcell[c]{one transaction\\\textit{n} object owners}\\ \hline 
 		\textbf{Master} & 
-		\specialcell[c]{N transactions\\one object owner} &
+		\specialcell[c]{\textit{n} transactions\\one object owner} &
 		\specialcell[c]{one transaction\\one object owner}\\ 
 		\hline
 	\end{tabular}
