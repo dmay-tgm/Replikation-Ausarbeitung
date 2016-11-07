@@ -257,12 +257,52 @@ Der Nachteil ist, dass hier wieder Konflikte entstehen können. Zwar könnte bid
 Für mobile Computing eignet sich die bidirektionale Replikation sehr, da somit auch offline produktiv gearbeitet werden kann.
 
 In der Hochverfügbarkeit könnte man symmetrische Replikation entweder mit synchroner kombinieren und würde somit ein System erhalten, das für einzelne Anfragen lange Antwortzeiten hat und somit nicht mehr ständig verfügbar ist. Oder man kombiniert sie mit asynchroner Replikation, was im Fehlerfall einen erhöhten Informationsverlust zur Folge hätte, da die Änderungen noch nicht synchronisiert wurden. Für die Skalierung der Leselast eignet sich diese Strategie nicht, da sie keinen zusätzlichen Benefit dafür bringt.
-
+\clearpage
 \section{Klassifikation}
 
-Tabellengrafik
+Die unterschiedlichen Implementierungen lassen sich also durch die zwei bereits beschriebenen Eigenschaften klassifizieren.
 
-Baumgrafik
+\begin{enumerate}
+	\item \textbf{Wann} werden die Änderungen synchronisiert?
+	\item \textbf{In welche Richtung} werden Änderungen synchronisiert?
+\end{enumerate}
+
+Bei asynchroner Replikation spricht man von fauler (lazy, manchmal auch optimistic) Replikation. Im Gegensatz dazu steht die synchrone Replikation, die als eifrige (eager manchmal auch pessimistic) Replikation bezeichnet wird. Das Änderungsrecht wird in der folgenden Tabelle mit dem Besitz der Daten gleichgestellt. \cite{kaiserslautern}
+
+\renewcommand{\arraystretch}{1.5}
+\newcommand{\specialcell}[2][c]{%
+	\begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+\newcommand{\veryspecialcell}[3][c]{%
+	\begin{tabular}[#1]{@{}c@{}c@{}}#2\end{tabular}}
+\begin{table}[!h]
+	\center
+	\begin{tabular}{ | @{\hspace{3mm}} c @{\hspace{3mm}} | @{\hspace{3mm}} c @{\hspace{3mm}} | @{\hspace{3mm}} c @{\hspace{3mm}} |}	
+		\hline \veryspecialcell[c]{\textbf{Propagation}\\\textbf{vs.}\\\textbf{Ownership}} & \textbf{Lazy} & \textbf{Eager}\\ \hline \textbf{Group} & 
+		\specialcell[c]{N transactions\\N object owners} & \specialcell[c]{one transaction\\N object owners}\\ \hline 
+		\textbf{Master} & 
+		\specialcell[c]{N transactions\\one object owner} &
+		\specialcell[c]{one transaction\\one object owner}\\ 
+		\hline
+	\end{tabular}
+	\caption{Klassifikation \cite{dangers}}
+	\label{klassifikation}
+\end{table}
+
+\clearpage
+
+Replikation lässt sich auch anhand der folgenden Baumgrafik klassifizieren. Dabei wählt man zuerst das Korrektheitsziel, also ob die Daten transaktional konsistent oder nur konvergent sein sollen.
+
+\begin{figure}[!h]
+	\begin{center}
+		\includegraphics[width=1\linewidth]{images/klassifikation.jpg}
+		\caption{Klassifikation \cite{leipzig}}
+		\label{klassifikation2}
+	\end{center}
+\end{figure}
+
+Bei der asynchronen Replikation kann man nun noch entscheiden, ob ein Knoten für Schreibzugriffe ausreichend ist, oder ob alle Knoten Veränderungen vornehmen können sollen.
+
+Da bei der synchronen Replikation Sperren verhängt werden, bringt ein einzelner Master-Server keinen Konsistenzvorteil gegenüber einer Multi-Master Architektur. Dies ist der Grund, warum diese Variante in der Grafik gar nicht erst vorkommt.
 
 \section{Resümee}
 Replikation ist also...
